@@ -1,0 +1,40 @@
+name: 'Local validation of data export against CN shacl' 
+
+on:
+  workflow_dispatch: 
+    inputs:
+      data-export-uri:
+        description: 'Link to the json-ld export of the dataset.'
+        required: true
+        type: string
+        default: 'http://api.linkeddata.cultureelerfgoed.nl/datasets/rce/rijkscollectie-rce/download.jsonld'
+      shacl-shape-uri:
+        description: 'Link to the shacl shape.'
+        required: true
+        type: string
+        default: 'https://github.com/cultureelerfgoed/collectie-nederland-schema-profile/raw/refs/heads/main/data/shacl.ttl'
+    
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download dataset export
+      run: |
+        wget '${{ inputs.data-export-uri }}' --header 'Authorization: Bearer ${{ secrets.LDV_API_TOKEN }}' --local-encoding 'utf-8' -O 'kc.jsonld.gz' 
+        file 'kc.jsonld.gz'
+        gzip -d 'kc.jsonld.gz'
+    - name: Download shacl shape
+      run: |
+        wget '${{ inputs.shacl-shape-uri }}' -O 'shacl.ttl'
+        file 'shacl.ttl'
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.x'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyshacl
+    - name: validate 
+      run: |
+        pyshacl -s shacl.ttl -m -i rdfs -a -j -f human -df json-ld kc.jsonld

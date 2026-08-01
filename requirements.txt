@@ -1,0 +1,5 @@
+rdflib>=7.6.0
+pyrcelib>=2026.0.8
+PyYAML>=6.0.3
+singleton-decorator>=1.0.0
+pytest>=2.3.0

@@ -1,0 +1,14 @@
+PREFIX schema: <http://schema.org/>
+SOURCE records_xml_file: <cache.xml>
+
+ITERATOR records_xml <xpath: //ListRecords/record> {
+    FIELD id <metadata/record/@priref>
+    FIELD description <metadata/record/Description/description>
+}
+
+EXPRESSION records <records_xml_file.records_xml> 
+
+:Records :[records.id] {
+    schema:name [records.name] ;
+    schema:description [records.description] ;
+}
