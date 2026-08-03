@@ -1,7 +1,5 @@
+from datetime import datetime
 import logging
-import traceback
-from rdflib import Graph
-import yaml
 import re
 import time
 import gzip
@@ -11,13 +9,9 @@ import urllib.parse
 import urllib.error
 import xml.etree.ElementTree as ET
 from typing import Optional, Tuple
-import transform_service
-import oai_to_schemaorg_mapping as mapping
-from rdflib.namespace import SDO, RDF
-import oai_xpaths as xpath
+import endpoint
 
 logger = logging.getLogger(__name__)
-config = yaml.safe_load(open('config/config.yml', encoding='utf-8'))
 
 # Verwijder ongeldige XML control chars (0x00-0x08, 0x0B, 0x0C, 0x0E-0x1F)
 INVALID_XML_CHARS = re.compile(r"[\x00-\x08\x0B\x0C\x0E-\x1F]")
@@ -110,8 +104,10 @@ def safe_open_url(req: urllib.request.Request, retries: int = 3, backoff: float 
     if last_err:
         raise last_err
 
-def fetch_and_parse(url: str, headers: dict, 
-                    retries: int, backoff: float) -> Tuple[ET.Element, str]:
+def fetch_and_parse(url: str, 
+                    headers: dict[str, str], 
+                    retries: int, 
+                    backoff: float) -> ET.ElementTree[ET.Element[str]]:
     """
     Haal op -> decodeer -> schoon -> parse.
     Bij parsefout: één reparatiepoging met AMP_FIX. Dump ruwe response en stop als het dan nog faalt.
@@ -123,20 +119,28 @@ def fetch_and_parse(url: str, headers: dict,
     # Decodeer en schoon
     text = raw.decode("utf-8", errors="replace")
     text = clean_xml(text)
+    text = re.sub(' xmlns="http://www.openarchives.org/OAI/2.0/"', '', text)
+    text = re.sub(' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"', '', text)
+    text = re.sub(' xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"', '', text)
+
+    filepath = f'{endpoint.CACHE_DIR}record_{datetime.timestamp(datetime.now())}.xml'
+    with open(filepath, mode='w') as file:
+        file.write(text)
 
     # Eerste parsepoging
     try:
-        root = ET.fromstring(text)
-        return root, text
+        tree = ET.parse(filepath)
+        #root = ET.fromstring(text)
+        return tree
     except ET.ParseError:
         pass
 
     # Reparatie: losse & omzetten naar &amp; en opnieuw proberen
     repaired = AMP_FIX.sub("&amp;", text)
     try:
-        root = ET.fromstring(repaired)
+        tree = ET.parse(repaired)
         logger.debug("Waarschuwing: XML gerepareerd (losse & geëscapet).")
-        return root, repaired
+        return tree
     except ET.ParseError as e2:
         # Dump voor diagnose
         raise e2
@@ -153,18 +157,17 @@ def oai_params_first_call(verb: str, metadata_prefix: Optional[str], set_spec: O
 # -----------------------------
 # Harvest met rotatie, limiet, CSV/JSONL
 # -----------------------------
-def harvest(target_graph: Graph, base_url: str, metadata_prefix: Optional[str], set_spec: Optional[str],
+def harvest(base_url: str, metadata_prefix: Optional[str], set_spec: Optional[str],
             sleep_between: float = 0.2, retries: int = 3, backoff: float = 1.5, 
-            max_items: Optional[int] = None, state: Optional[dict] = None, verb='ListRecords') -> Graph:
+            max_items: Optional[int] = None, state: Optional[dict] = None, verb='ListRecords'):
 
     headers = {
         "User-Agent": "OAI-PMH harvester (Python stdlib)",
         "Accept": "application/xml, text/xml;q=0.9, */*;q=0.1",
         "Accept-Encoding": "identity, gzip, deflate",
     }
-    st_items = len(list(target_graph.subjects(RDF.type, SDO.ArchiveComponent)))
 
-    params = {"verb": verb}
+    params = {'verb': verb, 'limit': endpoint.SRC_API_LIMIT}
     if metadata_prefix:
         params["metadataPrefix"] = metadata_prefix
     if set_spec:
@@ -180,40 +183,31 @@ def harvest(target_graph: Graph, base_url: str, metadata_prefix: Optional[str], 
         }
     
     try:
+        page_iterator = 0
         while True:
-            len_diff = len(list(target_graph.subjects(RDF.type, SDO.CreativeWork))) - st_items
-            if max_items is not None and len_diff >= max_items:
-                logger.debug(f"Max-items bereikt ({max_items}). Stoppen.")
-                state.update({
-                    'total': int(state.get('total', 0)) + len_diff,
-                })
-                break
-
             if state.get("resumptionToken") and state.get('resumptionToken', '').strip() != '':
                 params["resumptionToken"] = state.get("resumptionToken")
 
             url = build_url(base_url, params)
-            root, text = fetch_and_parse(url, headers, retries, backoff)
-            text = clean_xml(text)
-            root = ET.fromstring(text)
+            tree = fetch_and_parse(url, headers, retries, backoff)
+            root = tree.getroot()
 
             # Selecteer items
             if verb == "ListRecords":
-                elements = root.findall(".//oai:metadata/oai:record", NS)
- 
-                for element in elements:
-                    try:
-                        transform_service.parse_tree_to_graph(target_graph, element, mapping, xpath, 'ns0', 'http://www.openarchives.org/OAI/2.0/')
-                    except (AssertionError, TypeError, Exception) as te:
-                        logger.warning('Error during transformation: %s', str(traceback.format_exception(te)))
+            
+                record_elements = root.findall(".//metadata/record", NS)
+                page_limit = 10
+
+                if len(record_elements) > 0 and page_iterator < page_limit: 
+                    page_iterator += 1
+                else:
+                    break
 
             # Volgende pagina
-            rt_el = root.find(".//oai:resumptionToken", NS)
+            rt_el = root.find(".//resumptionToken", NS)
             # maybe get oai:completeListSize?
             rt = rt_el.text.strip() if rt_el is not None and rt_el.text else ""
             
-            logger.debug(f"{len(list(target_graph.subjects(RDF.type, SDO.CreativeWork)))} items in graph. ResumptionToken {'aanwezig' if rt else 'ontbreekt'}.")
-
             state.update({
                 "resumptionToken": rt,
             })
@@ -223,7 +217,6 @@ def harvest(target_graph: Graph, base_url: str, metadata_prefix: Optional[str], 
 
             time.sleep(sleep_between)
 
-        return target_graph
     except Exception as e:
         raise e
 
@@ -233,25 +226,17 @@ def main():
         level=logging.INFO,
         datefmt='%Y-%m-%d %H:%M:%S')
     print('Starting harvest test.')
-    rgraph = Graph()
     persistant_state = {
                 "total": 0,
                 "resumptionToken": "",
         }
     print('Calling harvester..')
-    rgraph = harvest(rgraph, 
-                        base_url=config['SRC_URI'], 
-                        verb='ListRecords', 
-                        metadata_prefix='kc_rs', 
-                        set_spec=config['SRC_DB'],
-                        state=persistant_state,
-                        max_items=10)
-    records = len(list(rgraph.subjects(RDF.type, SDO.ArchiveComponent)))
-    rgraph.serialize(format='json-ld', 
-                            destination='TEST-oai-kc.jsonld',  
-                            auto_compact=True)
-    logger.info(f'got {records} records ')
-    #assert records == 100
+    harvest(base_url=endpoint.SRC_URI, 
+            verb='ListRecords', 
+            metadata_prefix=endpoint.SRC_PFX, 
+            set_spec=endpoint.SRC_DB,
+            state=persistant_state,
+            max_items=10)
 
 if __name__ == "__main__":
     main()

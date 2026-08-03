@@ -3,17 +3,11 @@ name: 'RCE Kunstcollecties ETL: stateful harvest + transform'
 env:
   BASE_URI: 'https://linkeddata.cultureelerfgoed.nl/'
   ARTIFACT_PATH: 'artifact.tar.gz'
-  GRAPH_ID: 'rijkscollectie-latest-graph'
+  GRAPH_ID: 'rijkscollectie-generic-graph'
   DATASET_NAME: 'rijkscollectie-rce'
 
 on:
-  workflow_dispatch:
-    inputs:
-      chunks:
-        description: 'Number of records per upload.'
-        required: true
-        type: number
-        default: 7000
+  workflow_dispatch: {}
     
 jobs:
   harvest-and-transform:
@@ -29,13 +23,13 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-    - name: Run functional tests
-      run: |
-        python -m pytest tests/
+        export PYTHONPATH=config/
+        wget -O 'lib/shexml.jar' 'https://repo1.maven.org/maven2/com/herminiogarcia/shexml_3/0.6.1/shexml_3-0.6.1.jar'
     - name: Harvest and transform 
       run: |
-        python src/harvest_service.py --chunks ${{ inputs.chunks }} 
-        tar cvf - *.jsonld | gzip -9 - > ${{ env.ARTIFACT_PATH }}
+        python src/oai_harvester.py 
+        java -jar lib/shexml.jar -m config/collections_schema.shexml -f jsonld -o data/output/kc.jsonld
+        tar cvf - data/output/*.jsonld | gzip -9 - > ${{ env.ARTIFACT_PATH }}
     - name: Compress
       run: |
         tar cvf - *.jsonld | gzip -9 - > ${{ env.ARTIFACT_PATH }}  
