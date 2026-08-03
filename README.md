@@ -15,6 +15,8 @@ java -jar lib/shexml.jar -m config/collections_schema.shexml -f jsonld -o data/o
 
 ## Configuration
 ### Endpoint
-``` config/endpoint.py ```
+The endpoint configuration for both the source and target of the data is located in ``` config/endpoint.py ```.
+
 ### Mapping
-``` config/collections_schema.shexml ```
+
+There is currently one mapping in development, which maps from the AdlibXML provided by the OAI-PMH endpoint of Axiell Collections to the [NDE Schema.org Application Profile](https://docs.nde.nl/schema-profile/), located in ``` config/collections_schema.shexml ```.
