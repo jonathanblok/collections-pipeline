@@ -199,6 +199,8 @@ def harvest(base_url: str, metadata_prefix: Optional[str], set_spec: Optional[st
 
                 if len(record_elements) > 0 and (page_limit == 0 or page_iterator < page_limit): 
                     page_iterator += 1
+                    if page_limit > 0 and (page_limit / page_iterator) % (page_limit/10) == 0:
+                        logger.info('Harvested %i out of %i pages. ', page_iterator, page_limit)
                 else:
                     break
 
@@ -224,8 +226,8 @@ def main():
         format='%(asctime)s %(levelname)-8s %(message)s',
         level=logging.INFO,
         datefmt='%Y-%m-%d %H:%M:%S')
-    print('Starting harvest test.')
-    persistant_state = {
+    print('Starting harvest..')
+    persistent_state = {
                 "total": 0,
                 "resumptionToken": "",
         }
@@ -234,7 +236,7 @@ def main():
             verb='ListRecords', 
             metadata_prefix=endpoint.SRC_PFX, 
             set_spec=endpoint.SRC_DB,
-            state=persistant_state)
+            state=persistent_state)
 
 if __name__ == "__main__":
     main()
