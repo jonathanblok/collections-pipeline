@@ -1,8 +1,7 @@
-# A generic pipeline for Axiell Collections to Linked Data 
-Harvest Axiell Collections data and tranform it to Linked Data using ShExML.
+# A generic pipeline for transforming Axiell Collections to Linked Data 
+Harvest Axiell Collections data and tranform it to Linked Data using ShExML. Currently, only connections to Axiell Collections via the OAI-PMH API are supported.
 
 ## How to Run
-
 ```
 python -m venv .venv
 source .venv/bin/activate
