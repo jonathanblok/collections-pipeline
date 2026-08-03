@@ -159,7 +159,7 @@ def oai_params_first_call(verb: str, metadata_prefix: Optional[str], set_spec: O
 # -----------------------------
 def harvest(base_url: str, metadata_prefix: Optional[str], set_spec: Optional[str],
             sleep_between: float = 0.2, retries: int = 3, backoff: float = 1.5, 
-            max_items: Optional[int] = None, state: Optional[dict] = None, verb='ListRecords'):
+            page_limit=0, state: Optional[dict] = None, verb='ListRecords'):
 
     headers = {
         "User-Agent": "OAI-PMH harvester (Python stdlib)",
@@ -196,9 +196,8 @@ def harvest(base_url: str, metadata_prefix: Optional[str], set_spec: Optional[st
             if verb == "ListRecords":
             
                 record_elements = root.findall(".//metadata/record", NS)
-                page_limit = 10
 
-                if len(record_elements) > 0 and page_iterator < page_limit: 
+                if len(record_elements) > 0 and (page_limit == 0 or page_iterator < page_limit): 
                     page_iterator += 1
                 else:
                     break
@@ -235,8 +234,7 @@ def main():
             verb='ListRecords', 
             metadata_prefix=endpoint.SRC_PFX, 
             set_spec=endpoint.SRC_DB,
-            state=persistant_state,
-            max_items=10)
+            state=persistant_state)
 
 if __name__ == "__main__":
     main()
