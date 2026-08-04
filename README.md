@@ -1,12 +1,14 @@
-# A generic pipeline for transforming Axiell Collections to Linked Data 
-Harvest Axiell Collections data and tranform it to Linked Data using ShExML. Currently, only connections to Axiell Collections via the OAI-PMH API are supported.
+# Een generieke pipeline voor het transformeren van Axiell Collections data naar Linked Data 
 
-## How to Run
+Deze repository biedt een pipeline die het ophalen, transformeren en pushen ondersteunt door middel van Github Actions, ShExML en Python. Op dit moment wordt alleen nog het ophalen van het OAI-PMH endpoint van Axiell Collections ondersteund. 
+
+## Hoe uit te voeren
 ```
+chmod +x run.sh
 ./run.sh
 ```
 
-## Configuration
+## Configureren
 
 
 ### Endpoint

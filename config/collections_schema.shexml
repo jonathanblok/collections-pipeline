@@ -2,6 +2,7 @@ PREFIX rcecw: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset
 PREFIX rcepe: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/person/>
 PREFIX rcepl: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/place/>
 PREFIX rcema: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/material/>
+PREFIX rcege: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/definedterm/>
 
 PREFIX schema: <http://schema.org/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -19,44 +20,38 @@ ITERATOR oai_records <xpath: //ListRecords/record> {
     FIELD title <metadata/record/Title/title>
     FIELD description <metadata/record/Description/description>
     FIELD dimension <metadata/record/dimension.free>
-    FIELD objectNumber <metadata/record/object_number>
     FIELD institution <metadata/record/institution.name>
-    FIELD size <metadata/record/dimension.free>
-    FIELD numberOfParts <metadata/record/number_of_parts>
+    FIELD number_of_parts <metadata/record/number_of_parts>
 
-    FIELD associationSubjectTerm <metadata/record/Associated_subject/association.subject/term>
-    FIELD associationSubjectUri <metadata/record/Associated_subject/association.subject/Source/source.number>
-    FIELD materialTerm <metadata/record/Material/material/term>
-    FIELD materialUri <metadata/record/Material/material/Source/source.number>
-    FIELD objectTerm <metadata/record/Object_name/object_name/term>
-    FIELD objectUri <metadata/record/Object_name/object_name/Source/source.number>
+    FIELD production_start_date <metadata/record/Production_date/production.date.start>
+    FIELD production_end_date <metadata/record/Production_date/production.date.end>
+    FIELD production_place_term <metadata/record/Production/production.place/term>
+    FIELD production_place_uri <metadata/record/Production/production.place/Source/source.number>
 
-    FIELD productionStart <metadata/record/Production_date/production.date.start>
-    FIELD productionEnd <metadata/record/Production_date/production.date.end>
-    FIELD productionPlaceTerm <metadata/record/Production/production.place/term>
-    FIELD productionPlaceUri <metadata/record/Production/production.place/Source/source.number>
-
-    FIELD creatorPriref <metadata/record/Production/creator/priref>
-    FIELD creatorName <metadata/record/Production/creator/name>
-    FIELD creatorBirthPlace <metadata/record/Production/creator/birth.place>
-    FIELD creatorBirthDate <metadata/record/Production/creator.date_of_birth>
-    FIELD creatorDeathDate <metadata/record/Production/creator.date_of_death>
-    FIELD creatorRKD <metadata/record/Production/creator/Source/source.number>
+    FIELD creator_priref <metadata/record/Production/creator/priref>
+    FIELD creator_name <metadata/record/Production/creator/name>
+    FIELD creator_birthplace <metadata/record/Production/creator/birth.place>
+    FIELD creator_birthdate <metadata/record/Production/creator.date_of_birth>
+    FIELD creator_deathdate <metadata/record/Production/creator.date_of_death>
+    FIELD creator_uri <metadata/record/Production/creator/Source/source.number>
 
     ITERATOR material <metadata/record/Material> {
-        FIELD term <material/term>
-        FIELD uri <material/Source/source.number>
-        FIELD part <material.part>
+        FIELD material_term <material/term>
+        FIELD material_uri <material/Source/source.number>
+    }
+
+    ITERATOR association_subject <metadata/record/Associated_subject> {
+        FIELD association_subject_term <association.subject/term>
+        FIELD association_subject_uri <association.subject/Source/source.number>
     }
 
     ITERATOR technique <metadata/record/Technique> {
-        FIELD term <technique/term>
-        FIELD part <technique.part>
+        FIELD tech_term <technique/term>
     }
 
-    ITERATOR genre <metadata/record/Object_name> {
-        FIELD term <object_name/term>
-        FIELD uri <material/Source/source.number>
+    ITERATOR object <metadata/record/Object_name> {
+        FIELD object_term <object_name/term>
+        FIELD object_uri <object_name/Source/source.number>
     }
 
     ITERATOR rights <metadata/record/Rights> {
@@ -67,36 +62,68 @@ ITERATOR oai_records <xpath: //ListRecords/record> {
     }
 }
 
-
 EXPRESSION records <oai_file.oai_records> 
+EXPRESSION placename <oai_file.oai_records.production_place_term UNION oai_file.oai_records.creator_birthplace>
+EXPRESSION person_name <oai_file.oai_records.rights.holder UNION oai_file.oai_records.creator_name>
 
-:Records rcecw:[records.priref] {
+AUTOINCREMENT place_id <0>
+AUTOINCREMENT material_id <0>
+AUTOINCREMENT person_id <0>
+AUTOINCREMENT genre_id <0>
+
+:CreativeWorks rcecw:[records.priref] {
     rdf:type schema:CreativeWork ;
+    rdf:type schema:ItemList ;
+    schema:name [records.title] ;
     schema:sdDatePublished [records.datestamp] ;
     schema:description [records.description] ;
+    schema:publisher [records.institution] ;
     schema:size [records.dimension] ;
-    schema:creator rcep:[records.creatorPriref] ;
-    schema:material rcema:[records.materialTerm] ;
+    schema:dateCreated [records.production_end_date] ;
+    schema:associatedMedia @:MediaObjects ;
+    schema:creator @:Persons ;
+    schema:contentLocation @:Places ;
+    schema:locationCreated @:Places ;
+    schema:about @:DefinedTerms ;
+    schema:material @:Materials ;
+    schema:genre @:DefinedTerms ;
+    schema:identifier @:PropertyValues ;
 }
 
-:Persons rcepe:[records.creatorPriref] {
+:Persons rcepe:[person_id] {
     rdf:type schema:Person ;
-    schema:name [records.creatorName]@nl ;
-    schema:birthDate [records.creatorBirthDate] ;
-    schema:deathDate [records.creatorDeathDate] ;
-    schema:sameAs [records.creatorRKD] ;
-    schema:birthPlace [records.creatorBirthPlace]@nl ;
+    schema:name [person_name]@nl ;
+    schema:birthDate [records.creator_birthdate] ;
+    schema:deathDate [records.creator_deathdate] ;
+    schema:sameAs [records.creator_uri] ;
+    schema:birthPlace @:Place ;
 }
 
-:ProductionPlace rcepl:[records.priref] {
+:ProductionPlaces rcepl:[place_id] {
     rdf:type schema:Place ; 
     schema:name [records.productionPlaceTerm] ;
     schema:sameAs [records.productionPlaceUri] ;
 }
 
-:Materials rcema:[records.materialTerm] {
+:Materials rcema:[material_id] {
     rdf:type schema:DefinedTerm ;
     rdf:type schema:Product ;
-    schema:name [records.materialTerm] ;
-    schema:sameAs [records.materialUri] ;
+    schema:name [records.material.material_term]@nl ;
+    schema:sameAs [records.material.material_uri] ;
+}
+
+:Genres rcege:[genre_id] {
+    rdf:type schema:DefinedTerm ;
+    schema:name [records.association_subject.association_subject_term]@nl ;
+    schema:sameAs [records.association_subject.association_subject_uri]
+}
+
+:Places rcepl:[place_id] {
+    rdf:type schema:Place ;
+    schema:name [placename]@nl ;
+    schema:sameAs [records.production_place_uri] ;
+}
+
+:PropertyValues rcepr:[property_value_id] {
+    rdf:type schema:PropertyValue ;
 }
