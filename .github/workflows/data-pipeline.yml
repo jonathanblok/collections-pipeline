@@ -24,7 +24,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        export PYTHONPATH=config/
     - name: Harvest data from endpoint
       run: |
         python src/oai_harvester.py

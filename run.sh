@@ -7,7 +7,6 @@ echo Setting up Python environment
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-export PYTHONPATH=config/
 
 ## Harvest
 echo Starting OAI-PMH harvester

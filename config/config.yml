@@ -13,7 +13,7 @@ SRC_DB = 'ruben_s'
 SRC_API_LIMIT = 100
 # metadataprefix
 SRC_PFX = 'kc_rs'
-CACHE_DIR = 'data/export/'
+EXPORT_DIR = 'data/export/'
 
 ### Toegestane waardes om link naar afbeelding te tonen ###
 RIGHTS_ASSIGNED_ALLOWLIST = ['NOPMB', 'PICTORIGHT', 'YES']

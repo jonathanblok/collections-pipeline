@@ -4,20 +4,25 @@ import re
 import time
 import gzip
 import zlib
+import os
 import urllib.request
 import urllib.parse
 import urllib.error
 import xml.etree.ElementTree as ET
 from typing import Optional, Tuple
-import endpoint
+import yaml
 
-logger = logging.getLogger(__name__)
+CONFIG_PATH = os.getenv('CONFIG_PATH', 'config/config.yml')
+ENCODING = os.getenv('ENCODING', 'utf-8')
 
 # Verwijder ongeldige XML control chars (0x00-0x08, 0x0B, 0x0C, 0x0E-0x1F)
 INVALID_XML_CHARS = re.compile(r"[\x00-\x08\x0B\x0C\x0E-\x1F]")
 
 # Repareer losse & die geen geldige entity openen, bijv. "A&B" -> "A&amp;B"
 AMP_FIX = re.compile(r'&(?![A-Za-z#][A-Za-z0-9]*;)')
+
+logger = logging.getLogger(__name__)
+config = yaml.safe_load(open(CONFIG_PATH, encoding=ENCODING))
 
 # Namespaces
 NS = {
@@ -115,8 +120,8 @@ def fetch_and_parse(url: str,
     text = re.sub(' xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"', '', text)
     text = AMP_FIX.sub("&amp;", text)
 
-    filepath = f'{endpoint.CACHE_DIR}record_{datetime.timestamp(datetime.now())}.xml'
-    with open(filepath, mode='w', encoding="utf-8") as file:
+    filepath = f'{config['EXPORT_DIR']}record_{datetime.timestamp(datetime.now())}.xml'
+    with open(filepath, mode='w', encoding=ENCODING) as file:
         file.write(text)
 
     # Eerste parsepoging
@@ -151,7 +156,7 @@ def harvest(base_url: str, metadata_prefix: Optional[str], set_spec: Optional[st
         "Accept-Encoding": "identity, gzip, deflate",
     }
 
-    params = {'verb': verb, 'limit': endpoint.SRC_API_LIMIT}
+    params = {'verb': verb, 'limit': config['SRC_API_LIMIT']}
     if metadata_prefix:
         params["metadataPrefix"] = metadata_prefix
     if set_spec:
@@ -210,16 +215,14 @@ def main():
         format='%(asctime)s %(levelname)-8s %(message)s',
         level=logging.INFO,
         datefmt='%Y-%m-%d %H:%M:%S')
-    print('Starting harvest..')
     persistent_state = {
                 "total": 0,
                 "resumptionToken": "",
         }
-    print('Calling harvester..')
-    harvest(base_url=endpoint.SRC_URI, 
+    harvest(base_url=config['SRC_URI'], 
             verb='ListRecords', 
-            metadata_prefix=endpoint.SRC_PFX, 
-            set_spec=endpoint.SRC_DB,
+            metadata_prefix=config['SRC_PFX'], 
+            set_spec=config['SRC_DB'],
             state=persistent_state)
 
 if __name__ == "__main__":
