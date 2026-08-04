@@ -1,0 +1,35 @@
+name: 'transform' 
+
+env:
+  BASE_URI: 'https://linkeddata.cultureelerfgoed.nl/'
+  GRAPH_ID: 'rijkscollectie-generic-graph'
+  DATASET_NAME: 'rijkscollectie-rce'
+
+on:
+  workflow_dispatch: {}
+    
+jobs:
+  transform-data:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+    - uses: actions/cache@v6
+      with:
+        path: data/
+        key: ${{ env.DATASET_NAME }}-data-cache-${{ github.run_attempt }}
+    - name: print cache status
+      run: ls -R
+    - name: Clear data/output cache
+      run: |
+        rm data/output/*
+    - uses: actions/setup-java@v5
+      with:
+        distribution: temurin
+        java-version: latest
+    - run: java --version
+    - name: Install ShExML
+      run: |
+        wget -O 'lib/shexml.jar' 'https://github.com/herminiogg/ShExML/releases/download/v0.6.1/ShExML-v0.6.1.jar'
+    - name: Transform harvested data to Linked Data
+      run: |
+        find data/export/ -maxdepth 1 -type f | xargs -n 1 ./process_chunks.sh

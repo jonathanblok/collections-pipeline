@@ -1,0 +1,37 @@
+name: 'push' 
+
+env:
+  BASE_URI: 'https://linkeddata.cultureelerfgoed.nl/'
+  GRAPH_ID: 'rijkscollectie-generic-graph'
+  DATASET_NAME: 'rijkscollectie-rce'
+
+on:
+  workflow_dispatch: {}
+    
+jobs:
+  push-data:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/cache@v6
+      with:
+        path: data/
+        key: ${{ env.DATASET_NAME }}-data-cache-${{ github.run_attempt }}
+    - name: Install dependencies
+      run: |
+        wget 'https://static.triply.cc/cli/triplydb-linux'
+        chmod +x triplydb-linux
+    - name: Push changes to TriplyDB API via CLI
+      run: |
+        for file in *.jsonld; do ./triplydb-linux import-from-file --dataset "${{ env.DATASET_NAME }}" --token "${{ secrets.LDV_API_TOKEN }}" --account "rce" --url "https://api.linkeddata.cultureelerfgoed.nl" --default-graph-name "https://linkeddata.cultureelerfgoed.nl/rce/${{ env.DATASET_NAME }}/graphs/${{ env.GRAPH_ID }}" --mode "merge" "$file"; done
+    - name: Print triply error response
+      if: ${{ failure() }}
+      run: |
+        cat .triplydb-js.err
+
+  sync-service:
+    runs-on: ubuntu-latest
+    needs: push-data
+    steps:
+    - name: Sync changes to TriplyDB API via cURL
+      run:  |
+        curl -H 'Authorization: Bearer ${{ secrets.LDV_API_TOKEN }}' -H 'Content-Type: application/json' -X POST 'https://api.linkeddata.cultureelerfgoed.nl/datasets/rce/${{ env.DATASET_NAME }}/services/${{ env.DATASET_NAME }}' -d '{"sync": "true"}'
