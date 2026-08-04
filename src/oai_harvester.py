@@ -36,15 +36,6 @@ def build_url(base: str, params: dict) -> str:
     base = base.rstrip("?")
     return f"{base}?{urllib.parse.urlencode(params)}"
 
-def oai_params_first_call(verb: str, metadata_prefix: Optional[str], set_spec: Optional[str]) -> dict:
-    params = {"verb": verb}
-    if verb in ("ListRecords", "ListIdentifiers"):
-        if metadata_prefix:
-            params["metadataPrefix"] = metadata_prefix
-        if set_spec:
-            params["set"] = set_spec
-    return params
-
 # -----------------------------
 # HTTP ophalen met retries en Retry-After
 # -----------------------------
@@ -107,7 +98,7 @@ def safe_open_url(req: urllib.request.Request, retries: int = 3, backoff: float 
 def fetch_and_parse(url: str, 
                     headers: dict[str, str], 
                     retries: int, 
-                    backoff: float) -> ET.ElementTree[ET.Element[str]]:
+                    backoff: float) -> Optional[ET.ElementTree]:
     """
     Haal op -> decodeer -> schoon -> parse.
     Bij parsefout: één reparatiepoging met AMP_FIX. Dump ruwe response en stop als het dan nog faalt.
@@ -122,9 +113,10 @@ def fetch_and_parse(url: str,
     text = re.sub(' xmlns="http://www.openarchives.org/OAI/2.0/"', '', text)
     text = re.sub(' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"', '', text)
     text = re.sub(' xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"', '', text)
+    text = AMP_FIX.sub("&amp;", text)
 
     filepath = f'{endpoint.CACHE_DIR}record_{datetime.timestamp(datetime.now())}.xml'
-    with open(filepath, mode='w') as file:
+    with open(filepath, mode='w', encoding="utf-8") as file:
         file.write(text)
 
     # Eerste parsepoging
@@ -132,18 +124,10 @@ def fetch_and_parse(url: str,
         tree = ET.parse(filepath)
         #root = ET.fromstring(text)
         return tree
-    except ET.ParseError:
-        pass
+    except ET.ParseError as pe:
+        raise pe
 
-    # Reparatie: losse & omzetten naar &amp; en opnieuw proberen
-    repaired = AMP_FIX.sub("&amp;", text)
-    try:
-        tree = ET.parse(repaired)
-        logger.debug("Waarschuwing: XML gerepareerd (losse & geëscapet).")
-        return tree
-    except ET.ParseError as e2:
-        # Dump voor diagnose
-        raise e2
+
 
 def oai_params_first_call(verb: str, metadata_prefix: Optional[str], set_spec: Optional[str]) -> dict:
     params = {"verb": verb}
