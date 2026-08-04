@@ -22,7 +22,7 @@ jobs:
         key: ${{ env.DATASET_NAME }}-data-cache-${{ github.run_attempt }}
     - name: Clear data/export cache
       run: |
-        rm data/export/*
+        rm -f data/export/*
     - name: Upgrade pip and install Python packages
       run: |
         python -m pip install --upgrade pip
@@ -46,7 +46,7 @@ jobs:
       run: ls -R
     - name: Clear data/output cache
       run: |
-        rm data/output/*
+        rm -f data/output/*
     - uses: actions/setup-java@v5
       with:
         distribution: temurin

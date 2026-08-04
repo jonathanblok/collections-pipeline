@@ -21,7 +21,7 @@ jobs:
       run: ls -R
     - name: Clear data/output cache
       run: |
-        rm data/output/*
+        rm -f data/output/*
     - uses: actions/setup-java@v5
       with:
         distribution: temurin
