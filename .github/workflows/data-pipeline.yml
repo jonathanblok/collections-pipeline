@@ -42,6 +42,10 @@ jobs:
     - name: print cache status
       run: ls -R
     - uses: actions/setup-java@v5
+      with:
+        distribution: temurin
+        java-version: latest
+    - run: java --version
     - name: Install ShExML
       run: |
         wget -O 'lib/shexml.jar' 'https://github.com/herminiogg/ShExML/releases/download/v0.6.1/ShExML-v0.6.1.jar'
