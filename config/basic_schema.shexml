@@ -1,0 +1,102 @@
+PREFIX rcecw: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/creativework/>
+PREFIX rcepe: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/person/>
+PREFIX rcepl: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/place/>
+PREFIX rcema: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/material/>
+
+PREFIX schema: <http://schema.org/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+PREFIX xmlns: <http://www.openarchives.org/OAI/2.0/>
+PREFIX xsi: <http://www.w3.org/2001/XMLSchema-instance>
+
+SOURCE oai_file <data/export/record_*.xml>
+
+ITERATOR oai_records <xpath: //ListRecords/record> {
+    FIELD id <header/identifier>
+    FIELD datestamp <header/datestamp>
+    FIELD spec <header/setSpec>
+    FIELD priref <metadata/record/@priref>
+    FIELD title <metadata/record/Title/title>
+    FIELD description <metadata/record/Description/description>
+    FIELD dimension <metadata/record/dimension.free>
+    FIELD objectNumber <metadata/record/object_number>
+    FIELD institution <metadata/record/institution.name>
+    FIELD size <metadata/record/dimension.free>
+    FIELD numberOfParts <metadata/record/number_of_parts>
+
+    FIELD associationSubjectTerm <metadata/record/Associated_subject/association.subject/term>
+    FIELD associationSubjectUri <metadata/record/Associated_subject/association.subject/Source/source.number>
+    FIELD materialTerm <metadata/record/Material/material/term>
+    FIELD materialUri <metadata/record/Material/material/Source/source.number>
+    FIELD objectTerm <metadata/record/Object_name/object_name/term>
+    FIELD objectUri <metadata/record/Object_name/object_name/Source/source.number>
+
+    FIELD productionStart <metadata/record/Production_date/production.date.start>
+    FIELD productionEnd <metadata/record/Production_date/production.date.end>
+    FIELD productionPlaceTerm <metadata/record/Production/production.place/term>
+    FIELD productionPlaceUri <metadata/record/Production/production.place/Source/source.number>
+
+    FIELD creatorPriref <metadata/record/Production/creator/priref>
+    FIELD creatorName <metadata/record/Production/creator/name>
+    FIELD creatorBirthPlace <metadata/record/Production/creator/birth.place>
+    FIELD creatorBirthDate <metadata/record/Production/creator.date_of_birth>
+    FIELD creatorDeathDate <metadata/record/Production/creator.date_of_death>
+    FIELD creatorRKD <metadata/record/Production/creator/Source/source.number>
+
+    ITERATOR material <metadata/record/Material> {
+        FIELD term <material/term>
+        FIELD uri <material/Source/source.number>
+        FIELD part <material.part>
+    }
+
+    ITERATOR technique <metadata/record/Technique> {
+        FIELD term <technique/term>
+        FIELD part <technique.part>
+    }
+
+    ITERATOR genre <metadata/record/Object_name> {
+        FIELD term <object_name/term>
+        FIELD uri <material/Source/source.number>
+    }
+
+    ITERATOR rights <metadata/record/Rights> {
+        FIELD holder <rights.holder>
+        FIELD type <rights.type>
+        FIELD notes <rights.notes>
+        FIELD assigned  <rights.assigned/value>
+    }
+}
+
+
+EXPRESSION records <oai_file.oai_records> 
+
+:Records rcecw:[records.priref] {
+    rdf:type schema:CreativeWork ;
+    schema:sdDatePublished [records.datestamp] ;
+    schema:description [records.description] ;
+    schema:size [records.dimension] ;
+    schema:creator rcep:[records.creatorPriref] ;
+    schema:material rcema:[records.materialTerm] ;
+}
+
+:Persons rcepe:[records.creatorPriref] {
+    rdf:type schema:Person ;
+    schema:name [records.creatorName]@nl ;
+    schema:birthDate [records.creatorBirthDate] ;
+    schema:deathDate [records.creatorDeathDate] ;
+    schema:sameAs [records.creatorRKD] ;
+    schema:birthPlace [records.creatorBirthPlace]@nl ;
+}
+
+:ProductionPlace rcepl:[records.priref] {
+    rdf:type schema:Place ; 
+    schema:name [records.productionPlaceTerm] ;
+    schema:sameAs [records.productionPlaceUri] ;
+}
+
+:Materials rcema:[records.materialTerm] {
+    rdf:type schema:DefinedTerm ;
+    rdf:type schema:Product ;
+    schema:name [records.materialTerm] ;
+    schema:sameAs [records.materialUri] ;
+}
