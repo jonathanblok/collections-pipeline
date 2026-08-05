@@ -16,6 +16,8 @@ jobs:
       with:
         path: data/
         key: ${{ env.DATASET_NAME }}-data-cache-${{ github.run_attempt }}
+    - name: print cache status
+      run: ls -R
     - name: Install dependencies
       run: |
         wget 'https://static.triply.cc/cli/triplydb-linux'
