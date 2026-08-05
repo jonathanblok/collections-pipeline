@@ -3,6 +3,8 @@ PREFIX rcepe: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset
 PREFIX rcepl: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/place/>
 PREFIX rcema: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/material/>
 PREFIX rcege: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/definedterm/>
+PREFIX rcemd: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/mediaobject/>
+
 
 PREFIX schema: <http://schema.org/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -22,6 +24,12 @@ ITERATOR oai_records <xpath: //ListRecords/record> {
     FIELD dimension <metadata/record/dimension.free>
     FIELD institution <metadata/record/institution.name>
     FIELD number_of_parts <metadata/record/number_of_parts>
+    FIELD number_of_parts <metadata/record/number_of_parts>
+
+    ITERATOR reproduction_it <metadata/record/Reproduction/> {
+        FIELD reproduction_reference <reproduction.reference>
+    }
+    
 
     FIELD production_start_date <metadata/record/Production_date/production.date.start>
     FIELD production_end_date <metadata/record/Production_date/production.date.end>
@@ -65,11 +73,13 @@ ITERATOR oai_records <xpath: //ListRecords/record> {
 EXPRESSION records <oai_file.oai_records> 
 EXPRESSION placename <oai_file.oai_records.production_place_term UNION oai_file.oai_records.creator_birthplace>
 EXPRESSION person_name <oai_file.oai_records.rights.holder UNION oai_file.oai_records.creator_name>
+EXPRESSION defined_term_name <>
 
 AUTOINCREMENT place_id <0>
 AUTOINCREMENT material_id <0>
 AUTOINCREMENT person_id <0>
 AUTOINCREMENT genre_id <0>
+AUTOINCREMENT mediaobject_id <0>
 
 :CreativeWorks rcecw:[records.priref] {
     rdf:type schema:CreativeWork ;
@@ -82,6 +92,7 @@ AUTOINCREMENT genre_id <0>
     schema:dateCreated [records.production_end_date] ;
     schema:associatedMedia @:MediaObjects ;
     schema:creator @:Persons ;
+    schema:copyrightHolder @:Persons ;
     schema:contentLocation @:Places ;
     schema:locationCreated @:Places ;
     schema:about @:DefinedTerms ;
@@ -90,16 +101,27 @@ AUTOINCREMENT genre_id <0>
     schema:identifier @:PropertyValues ;
 }
 
+:MediaObjects rcemd:[records.reproduction_it.reproduction_reference] {
+    rdf:type schema:MediaObject ;
+    EXPRESSION contenturl <"https://images.memorix.nl/rce/thumb/fullsize/" + records.reproduction_it.reproduction_reference +".jpg">
+    EXPRESSION thumburl <"https://images.memorix.nl/rce/thumb/200x200/" + records.reproduction_it.reproduction_reference +".jpg">
+    EXPRESSION kcrights <"https://rightsstatements.org/page/InC/1.0/?language=nl">
+    schema:encodesCreativeWork  @:CreativeWork ;
+    schema:contentUrl [contenturl] ;
+    schema:thumbnailUrl [thumburl] ;
+    schema:license [kcrights] ;
+}
+
 :Persons rcepe:[person_id] {
     rdf:type schema:Person ;
     schema:name [person_name]@nl ;
     schema:birthDate [records.creator_birthdate] ;
     schema:deathDate [records.creator_deathdate] ;
     schema:sameAs [records.creator_uri] ;
-    schema:birthPlace @:Place ;
+    schema:birthPlace @:Places ;
 }
 
-:ProductionPlaces rcepl:[place_id] {
+:Places rcepl:[place_id] {
     rdf:type schema:Place ; 
     schema:name [records.productionPlaceTerm] ;
     schema:sameAs [records.productionPlaceUri] ;

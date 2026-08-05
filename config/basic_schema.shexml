@@ -65,8 +65,11 @@ ITERATOR oai_records <xpath: //ListRecords/record> {
         FIELD notes <rights.notes>
         FIELD assigned  <rights.assigned/value>
     }
-}
 
+    ITERATOR reproduction_it <metadata/record/Reproduction/> {
+        FIELD reproduction_reference <reproduction.reference>
+    }
+}
 
 EXPRESSION records <oai_file.oai_records> 
 
@@ -77,6 +80,25 @@ EXPRESSION records <oai_file.oai_records>
     schema:size [records.dimension] ;
     schema:creator rcep:[records.creatorPriref] ;
     schema:material rcema:[records.materialTerm] ;
+    schema:associatedMedia @:MediaObjects ;
+}
+
+:Materials rcema:[records.materialTerm] {
+    rdf:type schema:DefinedTerm ;
+    rdf:type schema:Product ;
+    schema:name [records.materialTerm] ;
+    schema:sameAs [records.materialUri] ;
+}
+
+:MediaObjects rcemd:[records.reproduction_it.reproduction_reference] {
+    rdf:type schema:MediaObject ;
+    EXPRESSION contenturl <"https://images.memorix.nl/rce/thumb/fullsize/" + records.reproduction_it.reproduction_reference +".jpg">
+    EXPRESSION thumburl <"https://images.memorix.nl/rce/thumb/200x200/" + records.reproduction_it.reproduction_reference +".jpg">
+    EXPRESSION kcrights <"https://rightsstatements.org/page/InC/1.0/?language=nl">
+    schema:encodesCreativeWork  @:CreativeWork ;
+    schema:contentUrl [contenturl] ;
+    schema:thumbnailUrl [thumburl] ;
+    schema:license [kcrights] ;
 }
 
 :Persons rcepe:[records.creatorPriref] {
@@ -92,11 +114,4 @@ EXPRESSION records <oai_file.oai_records>
     rdf:type schema:Place ; 
     schema:name [records.productionPlaceTerm] ;
     schema:sameAs [records.productionPlaceUri] ;
-}
-
-:Materials rcema:[records.materialTerm] {
-    rdf:type schema:DefinedTerm ;
-    rdf:type schema:Product ;
-    schema:name [records.materialTerm] ;
-    schema:sameAs [records.materialUri] ;
 }
