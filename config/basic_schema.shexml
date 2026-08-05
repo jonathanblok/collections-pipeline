@@ -9,7 +9,7 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX xmlns: <http://www.openarchives.org/OAI/2.0/>
 PREFIX xsi: <http://www.w3.org/2001/XMLSchema-instance>
 
-SOURCE oai_file <data/export/record_*.xml>
+SOURCE oai_file <data/chunk/record_*.xml>
 
 ITERATOR oai_records <xpath: //ListRecords/record> {
     FIELD id <header/identifier>
