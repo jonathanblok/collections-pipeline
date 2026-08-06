@@ -2,8 +2,8 @@ PREFIX rce_person: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/da
 PREFIX rce_place: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/place/>
 PREFIX rce_material: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/material/>
 PREFIX rce_creativework: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/creativework/>
+PREFIX rce_mediaobject: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/mediaobject/>
 PREFIX rce: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/>
-
 
 PREFIX schema: <http://schema.org/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -41,7 +41,7 @@ ITERATOR oai_records <xpath: //ListRecords/record> {
     FIELD creatorDeathDate <metadata/record/Production/creator.date_of_death>
     FIELD creatorRKD <metadata/record/Production/creator/Source/source.number>
 
-    ITERATOR material <metadata/record/Material> {
+    ITERATOR material_it <metadata/record/Material> {
         FIELD term <material/term>
         FIELD uri <material/Source/source.number>
         FIELD part <material.part>
@@ -63,12 +63,17 @@ ITERATOR oai_records <xpath: //ListRecords/record> {
         FIELD notes <rights.notes>
         FIELD assigned  <rights.assigned/value>
     }
+
+    ITERATOR reproduction_it <metadata/record/Reproduction> {
+        FIELD reproduction_reference <reproduction.reference>
+    }
 }
 
 EXPRESSION records <oai_file.oai_records> 
 AUTOINCREMENT person_id <0>
 AUTOINCREMENT place_id <0>
 AUTOINCREMENT material_id <0>
+AUTOINCREMENT media_object_id <0>
 
 rce:BirthPlace rce_place:[place_id] {
     rdf:type schema:Place ; 
@@ -77,34 +82,42 @@ rce:BirthPlace rce_place:[place_id] {
 
 rce:ProductionPlace rce_place:[place_id] {
     rdf:type schema:Place ; 
-    schema:name [records.productionPlaceTerm] ;
+    schema:name [records.productionPlaceTerm]@nl ;
     schema:sameAs [records.productionPlaceUri] ;
 }
 
 rce:Person rce_person:[person_id] {
     rdf:type schema:Person ;
-    schema:name [records.creatorName]@nl ;
+    schema:name [records.creatorName] ;
     schema:birthDate [records.creatorBirthDate] ;
     schema:deathDate [records.creatorDeathDate] ;
     schema:sameAs [records.creatorRKD] ;
     schema:birthPlace @rce:BirthPlace ;
 }
 
-rce:CreativeWork rce_creativework:[records.priref] {
-    rdf:type schema:CreativeWork ;
-    schema:sdDatePublished [records.datestamp] ;
-    schema:description [records.description] ;
-    schema:size [records.dimension] ;
-    schema:creator @rce:Person ;
-    schema:locationCreated @rce:ProductionPlace
-    schema:material @rce:Material ;
+rce:MediaObject rce_mediaobject:[media_object_id] {
+    rdf:type schema:MediaObject ;
+    schema:contentUrl [records.reproduction_it.reproduction_reference] ;
+    schema:thumbnailUrl [records.reproduction_it.reproduction_reference] ;
+    schema:encodesCreativeWork rce_creativework:[records.priref] ;
 }
-
-
 
 rce:Material rce_material:[material_id] {
     rdf:type schema:DefinedTerm ;
     rdf:type schema:Product ;
-    schema:name [records.material.term] ;
-    schema:sameAs [records.material.uri] ;
+    schema:name [records.material_it.term] ;
+    schema:sameAs [records.material_it.uri] ;
 }
+
+rce:CreativeWork rce_creativework:[records.priref] {
+    rdf:type schema:CreativeWork ;
+    schema:name [records.title] ;
+    schema:sdDatePublished [records.datestamp] ;
+    schema:description [records.description] ;
+    schema:size [records.dimension] ;
+    schema:creator @rce:Person ;
+    schema:associatedMedia @rce:MediaObject ;
+    schema:locationCreated @rce:ProductionPlace ;
+    schema:material @rce:Material ;
+}
+
