@@ -44,7 +44,7 @@ def build_url(base: str, params: dict) -> str:
 # -----------------------------
 # HTTP ophalen met retries en Retry-After
 # -----------------------------
-def safe_open_url(req: urllib.request.Request, retries: int = 3, backoff: float = 1.5) -> Tuple[int, str, bytes, dict]:
+def safe_open_url(req: urllib.request.Request, retries: int = 3, backoff: float = 1.5, timeout=30) -> Tuple[int, str, bytes, dict]:
     """
     HTTP GET met retries en backoff.
     Respecteert Retry-After bij 429/503.
@@ -53,7 +53,7 @@ def safe_open_url(req: urllib.request.Request, retries: int = 3, backoff: float 
     last_err = None
     for attempt in range(retries):
         try:
-            with urllib.request.urlopen(req) as resp:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
                 status = getattr(resp, "status", 200)
                 headers = {k: v for k, v in resp.headers.items()}
                 ct = headers.get("Content-Type", "")
