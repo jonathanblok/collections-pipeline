@@ -1,6 +1,8 @@
 PREFIX rce_person: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/person/>
 PREFIX rce_place: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/place/>
 PREFIX rce_material: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/material/>
+PREFIX rce_creativework: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/creativework/>
+PREFIX rce: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/>
 
 
 PREFIX schema: <http://schema.org/>
@@ -68,15 +70,15 @@ AUTOINCREMENT person_id <0>
 AUTOINCREMENT place_id <0>
 AUTOINCREMENT material_id <0>
 
+rce:BirthPlace rce_place:[place_id] {
+    rdf:type schema:Place ; 
+    schema:name [records.creatorBirthPlace]@nl ;
+}
 
-rce:CreativeWork rce:[records.priref] {
-    rdf:type schema:CreativeWork ;
-    schema:sdDatePublished [records.datestamp] ;
-    schema:description [records.description] ;
-    schema:size [records.dimension] ;
-    schema:creator @rce:Person ;
-    schema:locationCreated @rce:ProductionPlace
-    schema:material @rce:Material ;
+rce:ProductionPlace rce_place:[place_id] {
+    rdf:type schema:Place ; 
+    schema:name [records.productionPlaceTerm] ;
+    schema:sameAs [records.productionPlaceUri] ;
 }
 
 rce:Person rce_person:[person_id] {
@@ -88,16 +90,17 @@ rce:Person rce_person:[person_id] {
     schema:birthPlace @rce:BirthPlace ;
 }
 
-rce:BirthPlace rce_place:[place_id] {
-    rdf:type schema:Place ; 
-    schema:name [records.creatorBirthPlace]@nl ;
+rce:CreativeWork rce_creativework:[records.priref] {
+    rdf:type schema:CreativeWork ;
+    schema:sdDatePublished [records.datestamp] ;
+    schema:description [records.description] ;
+    schema:size [records.dimension] ;
+    schema:creator @rce:Person ;
+    schema:locationCreated @rce:ProductionPlace
+    schema:material @rce:Material ;
 }
 
-rce:ProductionPlace rce_place:[place_id] {
-    rdf:type schema:Place ; 
-    schema:name [records.productionPlaceTerm] ;
-    schema:sameAs [records.productionPlaceUri] ;
-}
+
 
 rce:Material rce_material:[material_id] {
     rdf:type schema:DefinedTerm ;
