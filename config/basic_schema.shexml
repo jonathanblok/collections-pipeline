@@ -1,9 +1,9 @@
-PREFIX rce_person: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/person/>
-PREFIX rce_place: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/place/>
-PREFIX rce_material: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/material/>
-PREFIX rce_creativework: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/creativework/>
-PREFIX rce_mediaobject: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/mediaobject/>
-PREFIX rce: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/>
+PREFIX org_person_ns: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/person/>
+PREFIX org_place_ns: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/place/>
+PREFIX org_material: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/material/>
+PREFIX org_creativework_ns: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/creativework/>
+PREFIX org_mediaobject_ns: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/mediaobject/>
+PREFIX org: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/>
 
 PREFIX schema: <http://schema.org/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -75,49 +75,49 @@ AUTOINCREMENT place_id <0>
 AUTOINCREMENT material_id <0>
 AUTOINCREMENT media_object_id <0>
 
-rce:BirthPlace rce_place:[place_id] {
+org:BirthPlace org_place_ns:[place_id] {
     rdf:type schema:Place ; 
     schema:name [records.creatorBirthPlace]@nl ;
 }
 
-rce:ProductionPlace rce_place:[place_id] {
+org:ProductionPlace org_place_ns:[place_id] {
     rdf:type schema:Place ; 
     schema:name [records.productionPlaceTerm]@nl ;
     schema:sameAs [records.productionPlaceUri] ;
 }
 
-rce:Person rce_person:[person_id] {
+org:Person org_person_ns:[person_id] {
     rdf:type schema:Person ;
     schema:name [records.creatorName] ;
     schema:birthDate [records.creatorBirthDate] ;
     schema:deathDate [records.creatorDeathDate] ;
     schema:sameAs [records.creatorRKD] ;
-    schema:birthPlace @rce:BirthPlace ;
+    schema:birthPlace @org:BirthPlace ;
 }
 
-rce:MediaObject rce_mediaobject:[media_object_id] {
+org:MediaObject org_mediaobject_ns:[media_object_id] {
     rdf:type schema:MediaObject ;
     schema:contentUrl [records.reproduction_it.reproduction_reference] ;
     schema:thumbnailUrl [records.reproduction_it.reproduction_reference] ;
-    schema:encodesCreativeWork rce_creativework:[records.priref] ;
+    schema:encodesCreativeWork org_creativework_ns:[records.priref] ;
 }
 
-rce:Material rce_material:[material_id] {
+org:Material org_material_ns:[material_id] {
     rdf:type schema:DefinedTerm ;
     rdf:type schema:Product ;
     schema:name [records.material_it.term] ;
     schema:sameAs [records.material_it.uri] ;
 }
 
-rce:CreativeWork rce_creativework:[records.priref] {
+org:CreativeWork org_creativework_ns:[records.priref] {
     rdf:type schema:CreativeWork ;
     schema:name [records.title] ;
     schema:sdDatePublished [records.datestamp] ;
     schema:description [records.description] ;
     schema:size [records.dimension] ;
-    schema:creator @rce:Person ;
-    schema:associatedMedia @rce:MediaObject ;
-    schema:locationCreated @rce:ProductionPlace ;
-    schema:material @rce:Material ;
+    schema:creator @org:Person ;
+    schema:associatedMedia @org:MediaObject ;
+    schema:locationCreated @org:ProductionPlace ;
+    schema:material @org:Material ;
 }
 
