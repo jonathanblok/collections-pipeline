@@ -16,7 +16,7 @@ python src/oai_harvester.py
 
 ## Dependencies
 echo Downloading ShExML..
-wget -O 'lib/shexml.jar' 'https://github.com/herminiogg/ShExML/releases/download/v0.6.1/ShExML-v0.6.1.jar'
+wget -O 'lib/shexml.jar' 'https://github.com/herminiogg/ShExML/releases/download/v0.7.0/ShExML-v0.7.0.jar'
 chmod +x process_chunks.sh
 
 ## Transform chunk
