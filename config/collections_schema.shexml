@@ -4,8 +4,9 @@ PREFIX rcepl: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset
 PREFIX rcema: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/material/>
 PREFIX rcege: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/definedterm/>
 PREFIX rcemd: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/mediaobject/>
-PREFIX imgfs: <"https://images.memorix.nl/rce/thumb/fullsize/>
-PREFIX imgth: <"https://images.memorix.nl/rce/thumb/200x200/>
+PREFIX rcepr: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/propertyvalue/>
+PREFIX imgfs: <https://images.memorix.nl/rce/thumb/fullsize/>
+PREFIX imgth: <https://images.memorix.nl/rce/thumb/200x200/>
 
 PREFIX schema: <http://schema.org/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -24,7 +25,7 @@ ITERATOR oai_records <xpath: //ListRecords/record> {
     FIELD number_of_parts <metadata/record/number_of_parts>
     FIELD object_id <metadata/record/object_number>
 
-    ITERATOR reproduction_it <metadata/record/Reproduction/> {
+    ITERATOR reproduction_it <metadata/record/Reproduction> {
         FIELD reproduction_reference <reproduction.reference>
         POPPED_FIELD encoded_creativework <priref>
     }
@@ -68,13 +69,20 @@ ITERATOR oai_records <xpath: //ListRecords/record> {
 
 EXPRESSION records <oai_file.oai_records> 
 EXPRESSION placename <oai_file.oai_records.production_place_term UNION oai_file.oai_records.creator_birthplace>
-EXPRESSION person_name <oai_file.oai_records.rights.holder UNION oai_file.oai_records.creator_name>
+EXPRESSION person_name <oai_file.oai_records.rights_holder UNION oai_file.oai_records.creator_name>
 
 AUTOINCREMENT place_id <0>
 AUTOINCREMENT material_id <0>
 AUTOINCREMENT person_id <0>
 AUTOINCREMENT genre_id <0>
 AUTOINCREMENT mediaobject_id <0>
+AUTOINCREMENT propertyvalue_id <0>
+
+:MediaObjects rcemd:[records.reproduction_it.reproduction_reference] {
+    rdf:type schema:MediaObject ;
+    schema:encodesCreativeWork  rcecw:[records.reproduction_it.encoded_creativework] ;
+    schema:contentUrl imgfs:[records.reproduction_it.reproduction_reference] ;
+}
 
 :CreativeWorks rcecw:[records.priref] {
     rdf:type schema:CreativeWork ;
@@ -90,24 +98,11 @@ AUTOINCREMENT mediaobject_id <0>
     schema:copyrightHolder @:Persons ;
     schema:contentLocation @:Places ;
     schema:locationCreated @:Places ;
-    schema:about @:DefinedTerms ;
     schema:material @:Materials ;
-    schema:genre @:DefinedTerms ;
+    schema:genre @:Genres ;
     schema:identifier @:PropertyValues ;
 }
 
-EXPRESSION contenturl <records.reproduction_it.reproduction_reference + ".jpg">
-EXPRESSION thumburl <records.reproduction_it.reproduction_reference + ".jpg">
-EXPRESSION kcrights <"https://rightsstatements.org/page/InC/1.0/?language=nl">
-
-:MediaObjects rcemd:[records.reproduction_it.reproduction_reference] {
-    rdf:type schema:MediaObject ;
-    schema:encodesCreativeWork  rcecw:[priref] ;
-    schema:contentUrl imgfs:[contenturl] ;
-    schema:thumbnailUrl imgth:[thumburl] ;
-    schema:license [kcrights] ;
-    schema:copyrightNotice [rights_type] ;
-}
 
 :Persons rcepe:[person_id] {
     rdf:type schema:Person ;
@@ -143,13 +138,7 @@ EXPRESSION kcrights <"https://rightsstatements.org/page/InC/1.0/?language=nl">
     schema:sameAs [records.production_place_uri] ;
 }
 
-EXPRESSION id_description "AdlibXML Object ID" ;
-EXPRESSION id_propid <"https://documentation.axiell.com/alm/en/index.html?ds_eiefxml.html">
-
-:PropertyValues rcepr:[property_value_id] {
+:PropertyValues rcepr:[propertyvalue_id] {
     rdf:type schema:PropertyValue ;
-    
-    schema:propertyID [id_propid] ;
-    schema:description [id_description] ;
     schema:value [records.object_id]
 }
