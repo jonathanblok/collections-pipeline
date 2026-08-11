@@ -5,17 +5,13 @@ PREFIX rcema: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset
 PREFIX rcege: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/definedterm/>
 PREFIX rcemd: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/mediaobject/>
 
-
 PREFIX schema: <http://schema.org/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-
-PREFIX xmlns: <http://www.openarchives.org/OAI/2.0/>
-PREFIX xsi: <http://www.w3.org/2001/XMLSchema-instance>
 
 SOURCE oai_file <data/chunk/record_*.xml>
 
 ITERATOR oai_records <xpath: //ListRecords/record> {
-    FIELD id <header/identifier>
+    FIELD id <metadata/priref>
     FIELD datestamp <header/datestamp>
     FIELD spec <header/setSpec>
     FIELD priref <metadata/record/@priref>
@@ -24,12 +20,11 @@ ITERATOR oai_records <xpath: //ListRecords/record> {
     FIELD dimension <metadata/record/dimension.free>
     FIELD institution <metadata/record/institution.name>
     FIELD number_of_parts <metadata/record/number_of_parts>
-    FIELD number_of_parts <metadata/record/number_of_parts>
+    FIELD object_id <metadata/record/object_number>
 
     ITERATOR reproduction_it <metadata/record/Reproduction/> {
         FIELD reproduction_reference <reproduction.reference>
     }
-    
 
     FIELD production_start_date <metadata/record/Production_date/production.date.start>
     FIELD production_end_date <metadata/record/Production_date/production.date.end>
@@ -42,6 +37,11 @@ ITERATOR oai_records <xpath: //ListRecords/record> {
     FIELD creator_birthdate <metadata/record/Production/creator.date_of_birth>
     FIELD creator_deathdate <metadata/record/Production/creator.date_of_death>
     FIELD creator_uri <metadata/record/Production/creator/Source/source.number>
+
+    FIELD rights_holder <rights.holder>
+    FIELD rights_type <rights.type>
+    FIELD rights_notes <rights.notes>
+    FIELD rights_assigned  <rights.assigned/value>
 
     ITERATOR material <metadata/record/Material> {
         FIELD material_term <material/term>
@@ -60,13 +60,6 @@ ITERATOR oai_records <xpath: //ListRecords/record> {
     ITERATOR object <metadata/record/Object_name> {
         FIELD object_term <object_name/term>
         FIELD object_uri <object_name/Source/source.number>
-    }
-
-    ITERATOR rights <metadata/record/Rights> {
-        FIELD holder <rights.holder>
-        FIELD type <rights.type>
-        FIELD notes <rights.notes>
-        FIELD assigned  <rights.assigned/value>
     }
 }
 
@@ -110,6 +103,7 @@ AUTOINCREMENT mediaobject_id <0>
     schema:contentUrl [contenturl] ;
     schema:thumbnailUrl [thumburl] ;
     schema:license [kcrights] ;
+    schema:copyrightNotice [rights_type] ;
 }
 
 :Persons rcepe:[person_id] {
@@ -148,4 +142,9 @@ AUTOINCREMENT mediaobject_id <0>
 
 :PropertyValues rcepr:[property_value_id] {
     rdf:type schema:PropertyValue ;
+    EXPRESSION id_description "AdlibXML Object ID" ;
+    EXPRESSION id_propid <"https://documentation.axiell.com/alm/en/index.html?ds_eiefxml.html">
+    schema:propertyID [id_propid] ;
+    schema:description [id_description] ;
+    schema:value [records.object_id]
 }
