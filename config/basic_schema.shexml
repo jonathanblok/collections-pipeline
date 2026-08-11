@@ -1,10 +1,11 @@
 PREFIX org_person_ns: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/person/>
 PREFIX org_place_ns: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/place/>
-PREFIX org_material: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/material/>
+PREFIX org_material_ns: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/material/>
 PREFIX org_creativework_ns: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/creativework/>
 PREFIX org_mediaobject_ns: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/mediaobject/>
 PREFIX org: <https://linkeddata.cultureelerfgoed.nl/rce/datacatalog/id/dataset/db6193aa-84af-3edf-90fd-074a0a11248d/>
-
+PREFIX imgfs: <"https://images.memorix.nl/rce/thumb/fullsize/>
+PREFIX imgth: <"https://images.memorix.nl/rce/thumb/200x200/>
 PREFIX schema: <http://schema.org/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
@@ -64,8 +65,9 @@ ITERATOR oai_records <xpath: //ListRecords/record> {
         FIELD assigned  <rights.assigned/value>
     }
 
-    ITERATOR reproduction_it <metadata/record/Reproduction> {
+    ITERATOR reproduction_it <metadata/record/Reproduction/> {
         FIELD reproduction_reference <reproduction.reference>
+        POPPED_FIELD encoded_creativework <priref>
     }
 }
 
@@ -95,11 +97,14 @@ org:Person org_person_ns:[person_id] {
     schema:birthPlace @org:BirthPlace ;
 }
 
+EXPRESSION contenturl <records.reproduction_it.reproduction_reference + ".jpg">
+EXPRESSION thumburl <records.reproduction_it.reproduction_reference + ".jpg">
+
 org:MediaObject org_mediaobject_ns:[media_object_id] {
     rdf:type schema:MediaObject ;
-    schema:contentUrl [records.reproduction_it.reproduction_reference] ;
-    schema:thumbnailUrl [records.reproduction_it.reproduction_reference] ;
-    schema:encodesCreativeWork org_creativework_ns:[records.priref] ;
+    schema:contentUrl imgfs:[contenturl] ;
+    schema:thumbnailUrl imgth:[thumburl] ;
+    schema:encodesCreativeWork org_creativework_ns:[records.reproduction_it.encoded_creativework] ;
 }
 
 org:Material org_material_ns:[material_id] {
